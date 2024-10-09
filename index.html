@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts에서 Press Start 2P 폰트를 불러옴 -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('backtothefuture.jpg'); /* 배경 이미지 파일 경로 */
+            background-size: cover; /* 배경 이미지가 화면을 가득 채우도록 설정 */
+            background-position: center; /* 배경 이미지 중앙 정렬 */
+            background-repeat: no-repeat; /* 배경 이미지 반복하지 않도록 설정 */
+        }
+
+        .button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1.5em;
+            background: linear-gradient(to bottom, white, lightgreen 70%); /* 버튼 그라데이션 */
+            color: black;
+            border: none;
+            border-radius: 50px; /* 완전한 라운드 버튼 */
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: lightgray;
+        }
+
+        .pixel {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            animation: fadeout 5s forwards;
+        }
+
+        .speaker {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            width: 60px; /* 스피커 아이콘 크기 조정 */
+            height: 50px;
+            background-image: url('speaker.png'); /* 스피커 아이콘 이미지 파일 경로 */
+            background-size: cover; /* 이미지가 div를 가득 채우도록 설정 */
+            background-position: center; /* 이미지 중앙 정렬 */
+            background-repeat: no-repeat; /* 이미지 반복하지 않도록 설정 */
+        }
+
+        @keyframes fadeout {
+            to {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        .triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); /* 삼각형 모양 */
+        }
+
+        .circle {
+            border-radius: 50%; /* 원 모양 */
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button class="button" onclick="enterPage()">Enter</button>
+        <div class="speaker" onclick="toggleMusic()"></div>
+        <audio id="background-music" loop>
+            <source src="lofi.mp3" type="audio/mpeg"> <!-- 음악 파일 경로 -->
+            Your browser does not support the audio tag.
+        </audio>
+    </div>
+
+    <script>
+        let isPlaying = false; // 음악 재생 상태
+        const music = document.getElementById('background-music');
+
+        document.addEventListener('mousemove', (e) => {
+            createPixel(e.pageX, e.pageY);
+        });
+
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 256); // Red 값 (0-255)
+            const g = Math.floor(Math.random() * 256); // Green 값 (0-255)
+            const b = Math.floor(Math.random() * 256); // Blue 값 (0-255)
+            return `rgb(${r}, ${g}, ${b})`; // RGB 형식으로 색상 반환
+        }
+
+        function createPixel(x, y) {
+            const pixel = document.createElement('div');
+            pixel.className = 'pixel';
+            pixel.style.left = `${x}px`;
+            pixel.style.top = `${y}px`;
+            pixel.style.backgroundColor = getRandomColor();  // 랜덤한 RGB 색상 적용
+
+            // 불규칙한 모양 결정
+            const randomShape = Math.random();
+            if (randomShape < 0.33) {
+                pixel.classList.add('circle');  // 원
+            } else if (randomShape < 0.66) {
+                pixel.classList.add('triangle');  // 삼각형
+            }
+
+            document.body.appendChild(pixel);
+
+            setTimeout(() => {
+                pixel.remove();
+            }, 5000);  // 5초 후에 사라짐
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                music.pause();
+            } else {
+                music.play();
+            }
+            isPlaying = !isPlaying; // 상태 변경
+        }
+        
+        function enterPage() {
+         window.location.href = "index3.html"; // index2.html로 이동
+        }
+
+    </script>
+</body>
+</html>
+
+
+
+

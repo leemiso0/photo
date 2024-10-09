@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-image: url('backtothefuture2.jpg'); /* 배경 이미지 파일 경로 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            color: white; /* 제목 색상 */
+            margin-bottom: 20px; /* 제목과 비디오 사이 간격 */
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .button {
+            margin: 20px;
+            padding: 10px 20px;
+            font-size: 1.5em;
+            background: linear-gradient(to bottom, white, lightgreen 70%);
+            color: black;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: lightgray;
+        }
+
+        .next-button {
+            display: none; /* NEXT 버튼 기본적으로 숨김 */
+            margin-left: 20px;
+        }
+
+        #camera-container {
+            display: block;
+            margin: 20px;
+            text-align: center;
+        }
+
+        #video {
+            border: 2px solid black; /* 비디오 테두리 */
+            width: 600px; /* 비디오 크기 확대 */
+            height: 450px; /* 비디오 높이 확대 */
+            margin-bottom: 20px; /* 비디오와 버튼 사이 간격 추가 */
+        }
+
+        #canvas {
+            display: none; /* 캔버스 숨김 */
+            width: 600px; /* 캔버스 크기 확대 */
+            height: 450px; /* 캔버스 높이 확대 */
+            border: 2px solid black; /* 캔버스 테두리 */
+        }
+
+        .thumbnail {
+            width: 150px; /* 미리보기 사진 크기 */
+            height: 112px; /* 미리보기 사진 높이 */
+            margin: 5px; /* 미리보기 사진 간격 */
+            cursor: pointer; /* 마우스 커서 포인터 */
+        }
+
+        #thumbnails {
+            display: flex; /* 미리보기 사진을 가로로 나열 */
+            flex-wrap: wrap; /* 줄바꿈 */
+            justify-content: center; /* 중앙 정렬 */
+            margin-top: 20px; /* 미리보기 사진과 버튼 사이 간격 */
+        }
+
+        #countdown {
+            font-size: 6em; /* 카운트다운 폰트 크기 조정 */
+            color: white; /* 카운트다운 색상을 흰색으로 설정 */
+            position: absolute; /* 절대 위치로 배치 */
+            top: 50%; /* 세로 중앙 정렬 */
+            left: 50%; /* 가로 중앙 정렬 */
+            transform: translate(-50%, -50%); /* 수직 및 수평 중앙 정렬 */
+            font-family: 'Press Start 2P', cursive; /* 폰트 설정 */
+        }
+
+        #editing-container {
+            display: none; /* 편집 컨테이너 숨김 */
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #selectedPhoto {
+            width: 400px; /* 선택된 사진 크기 */
+            height: 300px; /* 선택된 사진 높이 */
+            border: 2px solid black; /* 선택된 사진 테두리 */
+        }
+
+        .tool {
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        #brush-settings {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #brush-color, #brush-size {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="camera-container">
+        <video id="video" autoplay></video>
+        <br>
+        <div class="button-container">
+            <button class="button" onclick="startTimer()">Click!</button>
+            <button class="button next-button" onclick="nextPage()">NEXT</button> <!-- NEXT 버튼 -->
+        </div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <div id="thumbnails"></div> <!-- 미리보기 사진을 나열할 div -->
+    <div id="countdown"></div> <!-- 카운트다운 표시할 div -->
+
+    <!-- 편집 페이지 -->
+    <div id="editing-container">
+        <h1>Editing</h1>
+        <div>
+            <button class="button tool" onclick="selectBrush()">브러쉬</button>
+            <button class="button tool" onclick="selectEraser()">지우개</button>
+            <!-- 추가적인 도구 버튼을 여기에 추가할 수 있습니다. -->
+        </div>
+        <div id="brush-settings">
+            <label for="brush-color">색상 선택:</label>
+            <input type="color" id="brush-color" value="#000000"> <!-- 색상 선택 -->
+            <br>
+            <label for="brush-size">굵기 선택:</label>
+            <input type="range" id="brush-size" min="1" max="20" value="5"> <!-- 굵기 선택 -->
+        </div>
+        <canvas id="drawingCanvas" width="400" height="300" style="border:2px solid black;"></canvas> <!-- 그림 그리기용 캔버스 -->
+    </div>
+
+    <script>
+        let photoCount = 0; // 찍은 사진 개수
+        const maxPhotos = 4; // 최대 찍을 수 있는 사진 개수
+        let photos = []; // 사진 배열
+        let drawing = false;
+        let brushColor = '#000000'; // 초기 색상
+        let brushSize = 5; // 초기 굵기
+        let selectedBackground = ''; // 선택된 배경 사진
+
+        // 페이지 로드 시 카메라 자동 열기
+        window.onload = function() {
+            openCamera();
+        }
+
+        function openCamera() {
+            const cameraContainer = document.getElementById('camera-container');
+            cameraContainer.style.display = 'block'; // 카메라 컨테이너 보이기
+
+            // 카메라 접근
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    const video = document.getElementById('video');
+                    video.srcObject = stream; // 비디오 스트림 설정
+                    video.play(); // 비디오 재생
+                })
+                .catch(err => {
+                    console.error("카메라 접근 오류:", err);
+                });
+        }
+
+        function startTimer() {
+            if (photoCount < maxPhotos) {
+                countdown(3); // 3초 카운트다운 시작
+            } else {
+                alert("최대 사진 개수에 도달했습니다."); // 최대 개수 도달 시 알림
+            }
+        }
+
+        function countdown(seconds) {
+            const countdownDiv = document.getElementById('countdown');
+            countdownDiv.innerHTML = seconds; // 카운트다운 값 설정
+            countdownDiv.style.display = 'block'; // 카운트다운 보이기
+
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds < 0) {
+                    clearInterval(interval);
+                    takePicture(); // 사진 찍기
+                    countdownDiv.style.display = 'none'; // 카운트다운 숨기기
+                } else {
+                    countdownDiv.innerHTML = seconds; // 카운트다운 값 업데이트
+                }
+            }, 1000); // 1초마다 업데이트
+        }
+
+        function takePicture() {
+            const canvas = document.getElementById('canvas');
+            const video = document.getElementById('video');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth; // 비디오의 너비 설정
+            canvas.height = video.videoHeight; // 비디오의 높이 설정
+            context.drawImage(video, 0, 0, canvas.width, canvas.height); // 비디오에서 이미지 가져오기
+
+            // 미리보기 사진 만들기
+            const img = new Image();
+            img.src = canvas.toDataURL(); // 캔버스의 이미지 URL 가져오기
+            img.className = 'thumbnail'; // 미리보기 사진 스타일 추가
+            img.onclick = function() {
+                selectPhoto(img.src); // 사진 선택
+            };
+
+            // 미리보기 사진을 배열에 추가
+            photos.push(img.src);
+            photoCount++; // 찍은 사진 개수 증가
+
+            // 미리보기 사진을 DOM에 추가
+            const thumbnailsDiv = document.getElementById('thumbnails');
+            thumbnailsDiv.appendChild(img);
+
+            // 모든 사진을 찍었으면 카메라와 비디오 숨김
+            if (photoCount === maxPhotos) {
+                document.getElementById('camera-container').style.display = 'none'; // 카메라 숨김
+                document.querySelector('.next-button').style.display = 'block'; // NEXT 버튼 보이기
+            }
+        }
+
+        function selectPhoto(src) {
+
+            // 드로잉 캔버스 설정
+            const drawingCanvas = document.getElementById('drawingCanvas');
+            drawingCanvas.style.display = 'block'; // 드로잉 캔버스 보이기
+
+            // 선택된 배경을 드로잉 캔버스의 배경으로 설정
+            const ctx = drawingCanvas.getContext('2d');
+            const backgroundImage = new Image();
+            backgroundImage.src = src;
+            backgroundImage.onload = () => {
+                ctx.drawImage(backgroundImage, 0, 0, drawingCanvas.width, drawingCanvas.height);
+            };
+
+            // 편집 페이지 보이기
+            document.getElementById('editing-container').style.display = 'block';
+        }
+
+        function nextPage() {
+            // 다음 페이지로 이동하는 로직 추가
+            alert("다음 페이지로 이동합니다!"); // 임시 알림으로 대체
+        }
+
+        function selectBrush() {
+            drawing = true; // 브러쉬 모드 활성화
+            document.getElementById('brush-settings').style.display = 'block'; // 브러쉬 설정 보이기
+            document.getElementById('drawingCanvas').addEventListener('mousedown', startDrawing);
+            document.getElementById('drawingCanvas').addEventListener('mouseup', stopDrawing);
+            document.getElementById('drawingCanvas').addEventListener('mousemove', draw);
+        }
+
+       function startDrawing(event) {
+    drawing = true; // 그리기 시작
+    draw(event); // 현재 위치에서 그리기
+}
+
+function stopDrawing() {
+    drawing = false; // 그리기 중지
+    ctx.beginPath(); // 경로 초기화
+}
+
+function draw(event) {
+    if (!drawing) return; // 그리기 중이 아닐 경우 종료
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = brushColor; // 브러쉬 색상 설정
+    ctx.lineWidth = brushSize; // 브러쉬 굵기 설정
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    const rect = canvas.getBoundingClientRect(); // 캔버스의 위치와 크기
+    const x = event.clientX - rect.left; // 클릭한 X 좌표
+    const y = event.clientY - rect.top; // 클릭한 Y 좌표
+    ctx.lineTo(x, y); // 선 그리기
+    ctx.stroke(); // 선을 실제로 그리기
+    ctx.beginPath(); // 새로운 경로 시작
+    ctx.moveTo(x, y); // 현재 위치를 새로운 경로의 시작점으로 설정
+}
+
+// 마우스 이벤트를 추가
+canvas.addEventListener('mousedown', startDrawing); // 마우스 버튼 누름
+canvas.addEventListener('mouseup', stopDrawing); // 마우스 버튼 떼기
+canvas.addEventListener('mousemove', draw); // 마우스 이동
+
+
+        function selectEraser() {
+            drawing = false; // 그리기 중지
+            document.getElementById('brush-settings').style.display = 'none'; // 브러쉬 설정 숨김
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 캔버스 비우기
+            const selectedPhoto = document.getElementById('selectedPhoto');
+            ctx.drawImage(selectedPhoto, 0, 0, canvas.width, canvas.height); // 선택된 사진 다시 그리기
+        }
+
+        // 브러쉬 색상 및 굵기 변경
+        document.getElementById('brush-color').addEventListener('input', (event) => {
+            brushColor = event.target.value; // 선택된 색상 업데이트
+        });
+
+        document.getElementById('brush-size').addEventListener('input', (event) => {
+            brushSize = event.target.value; // 선택된 굵기 업데이트
+        });
+
+    </script>
+</body>
+</html>
+
